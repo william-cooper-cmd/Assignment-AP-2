@@ -1,16 +1,19 @@
 import os
 import json
 
-class Server():
+class Server:
     def __init__(self, name):
         self.tables = []
         self.name = name
-        self.ID = None
+        self.staff_id = None
 
-    def add_table(self, table_number, number_people):
+    def add_table(self):
+        table_number = input("Please enter table number: ")
+        number_people = int(input("Please enter number of people: "))
         self.tables.append([table_number, number_people])
 
-    def remove_table(self, table_number):
+    def remove_table(self):
+        table_number = input("Please enter table to remove: ")
         for table in self.tables:
             if table[0] == table_number:
                 self.tables.remove(table)
@@ -24,30 +27,30 @@ class Server():
 def main():
     if os.path.exists('server.lock'):
       print("Another server is logged in.")
+      print("If you're sure another server is not logged in, you can remove server.lock")
       input("Press any key to exit...")
 
     else:
         name = input("Please enter your name: ")
-        ID = input("Please enter your ID: ")
+        staff_id = input("Please enter your staff ID: ")
         try:
-            if check_credentials(name, ID):
+            if check_credentials(name, staff_id):
                 server = Server(name)
                 print(f"Welcome {server.name}")
                 open("server.lock", "w").close()
-                input()
-                os.remove("server.lock")
+                server_menu(server)
         except KeyboardInterrupt:
             os.remove("server.lock")
 
-def check_credentials(name, ID):
+def check_credentials(name, staff_id):
     try:
         with open("Servers.json", "r") as f:
             data = json.load(f)
         if name in data:
-            if ID == data[name.lower()]:
+            if staff_id == data[name.lower()]:
                 return True
             else:
-                print("ID does not match server name")
+                print("staff ID does not match server name")
                 return False
         else:
             print("Server not found.")
@@ -55,6 +58,26 @@ def check_credentials(name, ID):
     except FileNotFoundError:
         print("Servers.json file not found.")
         return False
+
+def server_menu(server):
+    while True:
+        print('''1) Add a table
+2) Remove a table
+3) Print tables
+4) Log out''')
+        choice = int(input("Enter your choice: "))
+        if choice == 1:
+            server.add_table()
+        elif choice == 2:
+            server.remove_table()
+        elif choice == 3:
+            server.print_tables()
+        elif choice == 4:
+            os.remove("server.lock")
+            exit()
+        else:
+            print("Invalid choice.")
+
 
 if __name__ == "__main__":
     main()
