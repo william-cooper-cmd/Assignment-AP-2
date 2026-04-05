@@ -11,16 +11,25 @@ class Server:
         table_number = input("Please enter table number: ")
         number_people = int(input("Please enter number of people: "))
         self.tables.append([table_number, number_people])
+        if self.create_order(table_number):
+            return True
+        return False
 
     def remove_table(self):
         table_number = input("Please enter table to remove: ")
         for table in self.tables:
             if table[0] == table_number:
                 self.tables.remove(table)
+                return True
+        return False
 
     def print_tables(self):
         for table in self.tables:
             print(f"Table Number: {table[0]}, Number of people: {table[1]}")
+
+
+    def create_order(self, table_number):
+        self.tables[table_number][]
 
 
 
@@ -42,6 +51,8 @@ def main():
         except KeyboardInterrupt:
             os.remove("server.lock")
 
+
+
 def check_credentials(name, staff_id):
     try:
         with open("Servers.json", "r") as f:
@@ -59,6 +70,8 @@ def check_credentials(name, staff_id):
         print("Servers.json file not found.")
         return False
 
+
+
 def server_menu(server):
     while True:
         print('''1) Add a table
@@ -67,9 +80,15 @@ def server_menu(server):
 4) Log out''')
         choice = int(input("Enter your choice: "))
         if choice == 1:
-            server.add_table()
+            if server.add_table():
+                print("Successfully added a table.")
+            else:
+                print("An error occurred.")
         elif choice == 2:
-            server.remove_table()
+            if server.remove_table():
+                print("Successfully removed a table.")
+            else:
+                print("An error occurred.")
         elif choice == 3:
             server.print_tables()
         elif choice == 4:
