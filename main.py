@@ -19,6 +19,8 @@ class Server():
         for table in self.tables:
             print(f"Table Number: {table[0]}, Number of people: {table[1]}")
 
+
+
 def main():
     if os.path.exists('server.lock'):
       print("Another server is logged in.")
@@ -27,20 +29,29 @@ def main():
     else:
         name = input("Please enter your name: ")
         ID = input("Please enter your ID: ")
-        if checkCredentials(name, ID):
-            server = Server(name)
+        try:
+            if check_credentials(name, ID):
+                server = Server(name)
+                print(f"Welcome {server.name}")
+                open("server.lock", "w").close()
+                input()
+                os.remove("server.lock")
+        except KeyboardInterrupt:
+            os.remove("server.lock")
 
-def checkCredentials(name, ID):
+def check_credentials(name, ID):
     try:
         with open("Servers.json", "r") as f:
             data = json.load(f)
         if name in data:
             if ID == data[name.lower()]:
-                print("You are logged in.")
+                return True
             else:
                 print("ID does not match server name")
+                return False
         else:
             print("Server not found.")
+            return False
     except FileNotFoundError:
         print("Servers.json file not found.")
         return False
