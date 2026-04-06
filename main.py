@@ -1,5 +1,6 @@
 import os
 import json
+import random
 
 class Server:
     def __init__(self, name):
@@ -32,13 +33,47 @@ class Table:
 
     def __init__(self):
         self.number = int(input("Please enter table number: "))
-        self.people = int(input("Please enter number of people: "))
+        self.num_people = int(input("Please enter number of people: "))
+        self.people = []
 
-    def add_items(self):
-        for person in range(self.people):
-            choice = None
-            while choice != "":
+    def create_people(self):
+        for number in range(self.num_people):
+            person = Person(number)
+            self.people.append(person)
+
+    def take_order(self):
+        for person in self.people:
+            while True:
                 choice = input("Please enter your choice: ")
+                if not choice:
+                    break
+                else:
+                    try:
+                        choice = int(choice)
+                    except ValueError:
+                        print("Invalid choice.")
+                    person.add_item()
+            person.recommend_drink()
+
+
+
+class Person:
+    def __init__(self, number):
+        self.name = f"person {number}"
+        self.items = []
+
+    def add_item(self, item):
+        self.items.append(item)
+
+    def recommend_drink(self):
+        recommend = False
+        for item in self.items:
+            if not item.drink:
+                recommend = True
+        if recommend:
+            with open("menu.json", "r") as menu_file:
+                menu = json.load(menu_file)
+            random.choice(menu["drinks"])
 
 
 
@@ -112,7 +147,7 @@ def print_menu():
     for category, items in menu.items():
         print(f"{category}:")
         for item in items:
-            print(f"{item['item_number']} - {item['name']}")
+            print(f"{item['item_number']} - {item['name']}: {item['description']}")
 
 
 if __name__ == "__main__":
