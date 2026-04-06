@@ -12,6 +12,7 @@ class Server:
             table = Table()
         except ValueError:
             print("Failed to create table.")
+            return False
         print_menu()
         table.create_people()
         table.take_order()
@@ -40,11 +41,8 @@ class Server:
 class Table:
 
     def __init__(self):
-        try:
-            self.number = int(input("Please enter table number: "))
-            self.num_people = int(input("Please enter number of people: "))
-        except ValueError:
-            raise
+        self.number = int(input("Please enter table number: "))
+        self.num_people = int(input("Please enter number of people: "))
         self.people = []
 
     def create_people(self):
@@ -99,15 +97,16 @@ def main():
     else:
         name = input("Please enter your name: ")
         staff_id = input("Please enter your staff ID: ")
-        try:
-            if check_credentials(name, staff_id):
-                server = Server(name)
-                print(f"Welcome {server.name}")
-                lock_file.touch()
+        if check_credentials(name, staff_id):
+            server = Server(name)
+            print(f"Welcome {server.name}")
+            lock_file.touch()
+            try:
                 server_menu(server)
-        finally:
-            if lock_file.exists():
-                lock_file.unlink()
+
+            finally:
+                if lock_file.exists():
+                    lock_file.unlink()
 
 
 def check_credentials(name, staff_id):
@@ -170,6 +169,12 @@ def load_menu():
         return json.load(menu_file)
 
 lock_file = Path("server.lock")
-menu = load_menu()
+
+try:
+    menu = load_menu()
+except FileNotFoundError:
+    print("Menu file not found.")
+    exit(1)
+
 if __name__ == "__main__":
     main()
