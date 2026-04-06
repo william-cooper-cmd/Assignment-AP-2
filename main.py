@@ -8,12 +8,11 @@ class Server:
         self.staff_id = None
 
     def add_table(self):
-        table_number = input("Please enter table number: ")
-        number_people = int(input("Please enter number of people: "))
-        self.tables.append([table_number, number_people])
-        if self.create_order(table_number):
-            return True
-        return False
+        table = Table()
+        print_menu()
+        table.add_items()
+        self.tables.append(table)
+
 
     def remove_table(self):
         table_number = input("Please enter table to remove: ")
@@ -28,8 +27,19 @@ class Server:
             print(f"Table Number: {table[0]}, Number of people: {table[1]}")
 
 
-    def create_order(self, table_number):
-        self.tables[table_number][]
+
+class Table:
+
+    def __init__(self):
+        self.number = int(input("Please enter table number: "))
+        self.people = int(input("Please enter number of people: "))
+
+    def add_items(self):
+        for person in range(self.people):
+            choice = None
+            while choice != "":
+                choice = input("Please enter your choice: ")
+
 
 
 
@@ -52,7 +62,6 @@ def main():
             os.remove("server.lock")
 
 
-
 def check_credentials(name, staff_id):
     try:
         with open("Servers.json", "r") as f:
@@ -69,7 +78,6 @@ def check_credentials(name, staff_id):
     except FileNotFoundError:
         print("Servers.json file not found.")
         return False
-
 
 
 def server_menu(server):
@@ -96,6 +104,15 @@ def server_menu(server):
             exit()
         else:
             print("Invalid choice.")
+
+
+def print_menu():
+    with open("menu.json", "r") as menu_file:
+        menu = json.load(menu_file)
+    for category, items in menu.items():
+        print(f"{category}:")
+        for item in items:
+            print(f"{item['item_number']} - {item['name']}")
 
 
 if __name__ == "__main__":
