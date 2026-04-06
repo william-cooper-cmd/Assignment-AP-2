@@ -11,7 +11,8 @@ class Server:
     def add_table(self):
         table = Table()
         print_menu()
-        table.add_items()
+        table.create_people()
+        table.take_order()
         self.tables.append(table)
 
 
@@ -38,11 +39,12 @@ class Table:
 
     def create_people(self):
         for number in range(self.num_people):
-            person = Person(number)
+            person = Person(number+1)
             self.people.append(person)
 
     def take_order(self):
         for person in self.people:
+            print(person.name)
             while True:
                 choice = input("Please enter your choice: ")
                 if not choice:
@@ -52,7 +54,7 @@ class Table:
                         choice = int(choice)
                     except ValueError:
                         print("Invalid choice.")
-                    person.add_item()
+                    person.add_item(choice)
             person.recommend_drink()
 
 
@@ -66,15 +68,16 @@ class Person:
         self.items.append(item)
 
     def recommend_drink(self):
-        recommend = False
-        for item in self.items:
-            if not item.drink:
-                recommend = True
+        recommend = True
+        with open("menu.json", "r") as menu_file:
+            menu = json.load(menu_file)
+        drink_ids = {item['item_number'] for item in menu['drinks']}
+        if any(num in drink_ids for num in self.items):
+            recommend = False
         if recommend:
-            with open("menu.json", "r") as menu_file:
-                menu = json.load(menu_file)
-            random.choice(menu["drinks"])
-
+            recommended = random.choice(menu['drinks'])
+            if input(f"Do you want to add {recommended['name']} to your order?").lower() == "yes":
+                self.add_item(recommended)
 
 
 
