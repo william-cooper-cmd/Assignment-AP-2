@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 import json
 import random
 
@@ -6,35 +6,45 @@ class Server:
     def __init__(self, name):
         self.tables = []
         self.name = name
-        self.staff_id = None
 
     def add_table(self):
-        table = Table()
+        try:
+            table = Table()
+        except ValueError:
+            print("Failed to create table.")
         print_menu()
         table.create_people()
         table.take_order()
         self.tables.append(table)
+        return True
 
 
     def remove_table(self):
-        table_number = input("Please enter table to remove: ")
+        try:
+            table_number = int(input("Please enter table to remove: "))
+        except ValueError:
+            print("Invalid choice.")
+            return False
         for table in self.tables:
-            if table[0] == table_number:
+            if table.number == table_number:
                 self.tables.remove(table)
                 return True
         return False
 
     def print_tables(self):
         for table in self.tables:
-            print(f"Table Number: {table[0]}, Number of people: {table[1]}")
+            print(f"Table Number: {table.number}, Number of people: {table.num_people}")
 
 
 
 class Table:
 
     def __init__(self):
-        self.number = int(input("Please enter table number: "))
-        self.num_people = int(input("Please enter number of people: "))
+        try:
+            self.number = int(input("Please enter table number: "))
+            self.num_people = int(input("Please enter number of people: "))
+        except ValueError:
+            raise
         self.people = []
 
     def create_people(self):
@@ -54,6 +64,7 @@ class Table:
                         choice = int(choice)
                     except ValueError:
                         print("Invalid choice.")
+                        continue
                     person.add_item(choice)
             person.recommend_drink()
 
@@ -69,20 +80,18 @@ class Person:
 
     def recommend_drink(self):
         recommend = True
-        with open("menu.json", "r") as menu_file:
-            menu = json.load(menu_file)
         drink_ids = {item['item_number'] for item in menu['drinks']}
         if any(num in drink_ids for num in self.items):
             recommend = False
         if recommend:
             recommended = random.choice(menu['drinks'])
             if input(f"Do you want to add {recommended['name']} to your order?").lower() == "yes":
-                self.add_item(recommended)
+                self.add_item(recommended['item_number'])
 
 
 
 def main():
-    if os.path.exists('server.lock'):
+    if lock_file.exists():
       print("Another server is logged in.")
       print("If you're sure another server is not logged in, you can remove server.lock")
       input("Press any key to exit...")
@@ -94,18 +103,19 @@ def main():
             if check_credentials(name, staff_id):
                 server = Server(name)
                 print(f"Welcome {server.name}")
-                open("server.lock", "w").close()
+                lock_file.touch()
                 server_menu(server)
-        except KeyboardInterrupt:
-            os.remove("server.lock")
+        finally:
+            if lock_file.exists():
+                lock_file.unlink()
 
 
 def check_credentials(name, staff_id):
     try:
         with open("Servers.json", "r") as f:
             data = json.load(f)
-        if name in data:
-            if staff_id == data[name.lower()]:
+        if name.lower() in data:
+            if staff_id.lower() == data[name.lower()]:
                 return True
             else:
                 print("staff ID does not match server name")
@@ -124,7 +134,11 @@ def server_menu(server):
 2) Remove a table
 3) Print tables
 4) Log out''')
-        choice = int(input("Enter your choice: "))
+        try:
+            choice = int(input("Enter your choice: "))
+        except ValueError:
+            print("Invalid choice.")
+            continue
         if choice == 1:
             if server.add_table():
                 print("Successfully added a table.")
@@ -132,26 +146,30 @@ def server_menu(server):
                 print("An error occurred.")
         elif choice == 2:
             if server.remove_table():
+                server.print_tables()
                 print("Successfully removed a table.")
             else:
                 print("An error occurred.")
         elif choice == 3:
             server.print_tables()
         elif choice == 4:
-            os.remove("server.lock")
-            exit()
+            return
         else:
             print("Invalid choice.")
 
 
 def print_menu():
-    with open("menu.json", "r") as menu_file:
-        menu = json.load(menu_file)
     for category, items in menu.items():
         print(f"{category}:")
         for item in items:
             print(f"{item['item_number']} - {item['name']}: {item['description']}")
 
 
+def load_menu():
+    with open("menu.json", "r") as menu_file:
+        return json.load(menu_file)
+
+lock_file = Path("server.lock")
+menu = load_menu()
 if __name__ == "__main__":
     main()
