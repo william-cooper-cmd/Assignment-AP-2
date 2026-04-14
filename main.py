@@ -1,180 +1,157 @@
-from pathlib import Path
 import json
 import random
+import sys
+from pathlib import Path
 
-class Server:
-    def __init__(self, name):
-        self.tables = []
-        self.name = name
+from Menu import Menu
+from Person import Person
+from Table import Table
+from Server import Server
 
-    def add_table(self):
-        try:
-            table = Table()
-        except ValueError:
-            print("Failed to create table.")
-            return False
-        print_menu()
-        table.create_people()
-        table.take_order()
-        self.tables.append(table)
+MENU_FILE = Path("menu.json")
+SERVERS_FILE = Path("servers.json")
+LOCK_FILE = Path("server.lock")
+DRINKS_CATEGORY = "drinks"
+
+def authenticate() -> Server:
+    if acquire_lock():
+        sys.exit(f"A server is already logged in. If this is an error delete '{LOCK_FILE}'")
+    server = get_server(*get_credentials())
+    if not server:
+        sys.exit("Name or staff id not found.")
+    server = Server(server)
+    print(f"Welcome {server.name}")
+    return server
+
+def setup_table(server: Server) -> Table:
+    table = Table(*get_table_details())
+    server.add_table(table)
+    add_people_to_table(table)
+    return table
+
+def take_orders(table: Table, menu: Menu) -> None:
+    for person in table.people:
+        while True:
+            item = get_order_items(person, menu)
+            if item is None:
+                break
+            person.add_item(item)
+        if person.recommend_drink(menu.get_category_ids(DRINKS_CATEGORY)):
+            add_recommended_drink(person, menu)
+
+def main(menu: Menu) -> None:
+    server = authenticate()
+    table = setup_table(server)
+    print(menu.format_menu())
+    take_orders(table, menu)
+    print(format_receipt(table, server))
+
+def get_credentials() -> tuple[str, str]:
+    name = input("Enter name: ")
+    staff_id = input("Enter staff id: ")
+    return name, staff_id
+
+def get_server(name: str, staff_id: str) -> dict | None:
+    try:
+        with SERVERS_FILE.open() as f:
+            server_details = json.load(f)
+    except FileNotFoundError:
+        sys.exit(f"Error: {SERVERS_FILE} not found.")
+    except json.JSONDecodeError as e:
+        sys.exit(f"Error: {SERVERS_FILE} is malformed — {e}")
+    for server in server_details:
+        if server['name'] == name and server['staff_id'] == staff_id:
+            return server
+    return None
+
+def acquire_lock() -> bool:
+    """Attempt to acquire the server lock. Returns True if already locked."""
+    try:
+        LOCK_FILE.open('x').close()
+        return False
+    except FileExistsError:
         return True
 
-
-    def remove_table(self):
-        try:
-            table_number = int(input("Please enter table to remove: "))
-        except ValueError:
-            print("Invalid choice.")
-            return False
-        for table in self.tables:
-            if table.number == table_number:
-                self.tables.remove(table)
-                return True
-        return False
-
-    def print_tables(self):
-        for table in self.tables:
-            print(f"Table Number: {table.number}, Number of people: {table.num_people}")
-
-
-
-class Table:
-
-    def __init__(self):
-        self.number = int(input("Please enter table number: "))
-        self.num_people = int(input("Please enter number of people: "))
-        self.people = []
-
-    def create_people(self):
-        for number in range(self.num_people):
-            person = Person(number+1)
-            self.people.append(person)
-
-    def take_order(self):
-        for person in self.people:
-            print(person.name)
-            while True:
-                choice = input("Please enter your choice: ")
-                if not choice:
-                    break
-                else:
-                    try:
-                        choice = int(choice)
-                    except ValueError:
-                        print("Invalid choice.")
-                        continue
-                    person.add_item(choice)
-            person.recommend_drink()
-
-
-
-class Person:
-    def __init__(self, number):
-        self.name = f"person {number}"
-        self.items = []
-
-    def add_item(self, item):
-        self.items.append(item)
-
-    def recommend_drink(self):
-        recommend = True
-        drink_ids = {item['item_number'] for item in menu['drinks']}
-        if any(num in drink_ids for num in self.items):
-            recommend = False
-        if recommend:
-            recommended = random.choice(menu['drinks'])
-            if input(f"Do you want to add {recommended['name']} to your order?").lower() == "yes":
-                self.add_item(recommended['item_number'])
-
-
-
-def main():
-    if lock_file.exists():
-      print("Another server is logged in.")
-      print("If you're sure another server is not logged in, you can remove server.lock")
-      input("Press any key to exit...")
-
-    else:
-        name = input("Please enter your name: ")
-        staff_id = input("Please enter your staff ID: ")
-        if check_credentials(name, staff_id):
-            server = Server(name)
-            print(f"Welcome {server.name}")
-            lock_file.touch()
-            try:
-                server_menu(server)
-
-            finally:
-                if lock_file.exists():
-                    lock_file.unlink()
-
-
-def check_credentials(name, staff_id):
-    try:
-        with open("Servers.json", "r") as f:
-            data = json.load(f)
-        if name.lower() in data:
-            if staff_id.lower() == data[name.lower()]:
-                return True
-            else:
-                print("staff ID does not match server name")
-                return False
-        else:
-            print("Server not found.")
-            return False
-    except FileNotFoundError:
-        print("Servers.json file not found.")
-        return False
-
-
-def server_menu(server):
+def get_positive_int(prompt: str) -> int:
     while True:
-        print('''1) Add a table
-2) Remove a table
-3) Print tables
-4) Log out''')
+        value = input(prompt)
+        if value.isdigit():
+            int_value = int(value)
+            if int_value > 0:
+                return int_value
+        print("Must be a positive integer.")
+
+def get_table_details() -> tuple[int, int]:
+    number = get_positive_int("Enter table number: ")
+    number_of_people = get_positive_int("Enter number of people: ")
+    return number, number_of_people
+
+def format_receipt(table: Table, server: Server) -> str:
+    total = 0
+    lines = [f'''
+        ----------------------------------
+            -- The Spectra Pizzeria --
+                      Table {table.number}
+        ----------------------------------''']
+    for person in table.people:
+        person_total = sum(item['price'] for item in person.items)
+        lines.append(f'''        Person {person.number}                    Price\n''')
+        for item in person.items:
+            lines.append(f"        {item['name']:<26} £{item['price']:>6.2f}")
+        lines.append(f"        Total:                     £{person_total:>6.2f}")
+        lines.append("\n")
+        total += person_total
+    lines.append(f'''        Total for the table:       £{total:>6.2f}\n''')
+    lines.append(f'''        Your server is: {server.name}
+        Enjoy your meal! Remember to 
+        recommend us to friends and family
+        ----------------------------------''')
+    return "".join(lines)
+
+def add_people_to_table(table: Table) -> None:
+    for i in range(1, table.number_of_people+1):
+        person = Person(i)
+        table.add_person(person)
+
+def get_order_items(person: Person, menu: Menu) -> dict | None:
+    print(f"person{person.number}:")
+    while True:
+        choice = input("Enter choice: ")
+        if choice == "":
+            return None
         try:
-            choice = int(input("Enter your choice: "))
+            choice = int(choice)
         except ValueError:
-            print("Invalid choice.")
+            print("Must be an integer.")
             continue
-        if choice == 1:
-            if server.add_table():
-                print("Successfully added a table.")
-            else:
-                print("An error occurred.")
-        elif choice == 2:
-            if server.remove_table():
-                server.print_tables()
-                print("Successfully removed a table.")
-            else:
-                print("An error occurred.")
-        elif choice == 3:
-            server.print_tables()
-        elif choice == 4:
+        item = menu.find_item(choice)
+        if item is None:
+            print("Item not found")
+            continue
+        return item
+
+def add_recommended_drink(person: Person, menu: Menu) -> None:
+    recommended_drink = menu.find_item(random.choice(list(menu.get_category_ids(DRINKS_CATEGORY))))
+    while True:
+        add = input(f"Would you like to add {recommended_drink['name']} to your order? ")
+        if add.lower() in ("yes", "y"):
+            person.add_item(recommended_drink)
+            return
+        elif add.lower() in ("no", "n"):
             return
         else:
-            print("Invalid choice.")
-
-
-def print_menu():
-    for category, items in menu.items():
-        print(f"{category}:")
-        for item in items:
-            print(f"{item['item_number']} - {item['name']}: {item['description']}")
-
-
-def load_menu():
-    with open("menu.json", "r") as menu_file:
-        return json.load(menu_file)
-
-lock_file = Path("server.lock")
-
-try:
-    menu = load_menu()
-except FileNotFoundError:
-    print("Menu file not found.")
-    exit(1)
+            print("Must be 'yes' or 'no'")
 
 if __name__ == "__main__":
-    main()
+    try:
+        with open(MENU_FILE, 'r') as file:
+            main_menu = Menu(json.load(file))
+    except FileNotFoundError:
+        sys.exit(f"Error: {MENU_FILE} not found.")
+    except json.JSONDecodeError as error:
+        sys.exit(f"Error: {MENU_FILE} is malformed — {error}")
+    try:
+        main(main_menu)
+    finally:
+        if LOCK_FILE.exists():
+            LOCK_FILE.unlink()
