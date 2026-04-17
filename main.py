@@ -14,6 +14,14 @@ LOCK_FILE = Path("server.lock")
 DRINKS_CATEGORY = "drinks"
 
 
+def main(menu: Menu) -> None:
+    server = authenticate()
+    table = setup_table(server)
+    print(menu.format_menu())
+    take_orders(table, menu)
+    print(format_receipt(table, server))
+
+
 def authenticate() -> Server:
     if acquire_lock():
         sys.exit(f"A server is already logged in. If this is an error delete '{LOCK_FILE}'")
@@ -25,30 +33,12 @@ def authenticate() -> Server:
     return server
 
 
-def setup_table(server: Server) -> Table:
-    table = Table(*get_table_details())
-    server.add_table(table)
-    add_people_to_table(table)
-    return table
-
-
-def take_orders(table: Table, menu: Menu) -> None:
-    for person in table.people:
-        while True:
-            item = get_order_items(person, menu)
-            if item is None:
-                break
-            person.add_item(item)
-        if person.recommend_drink(menu.get_category_ids(DRINKS_CATEGORY)):
-            add_recommended_drink(person, menu)
-
-
-def main(menu: Menu) -> None:
-    server = authenticate()
-    table = setup_table(server)
-    print(menu.format_menu())
-    take_orders(table, menu)
-    print(format_receipt(table, server))
+def acquire_lock() -> bool:
+    try:
+        LOCK_FILE.open('x').close()
+        return False
+    except FileExistsError:
+        return True
 
 
 def get_credentials() -> tuple[str, str]:
@@ -71,22 +61,11 @@ def get_server(name: str, staff_id: str) -> dict | None:
     return None
 
 
-def acquire_lock() -> bool:
-    try:
-        LOCK_FILE.open('x').close()
-        return False
-    except FileExistsError:
-        return True
-
-
-def get_positive_int(prompt: str) -> int:
-    while True:
-        value = input(prompt)
-        if value.isdigit():
-            int_value = int(value)
-            if int_value > 0:
-                return int_value
-        print("Must be a positive integer.")
+def setup_table(server: Server) -> Table:
+    table = Table(*get_table_details())
+    server.add_table(table)
+    add_people_to_table(table)
+    return table
 
 
 def get_table_details() -> tuple[int, int]:
@@ -95,33 +74,21 @@ def get_table_details() -> tuple[int, int]:
     return number, number_of_people
 
 
-def format_receipt(table: Table, server: Server) -> str:
-    total = 0
-    lines = [f'''
-        ----------------------------------
-            -- The Spectra Pizzeria --
-                      Table {table.number}
-        ----------------------------------\n''']
-    for person in table.people:
-        person_total = sum(item['price'] for item in person.items)
-        lines.append(f'''        Person {person.number}                    Price\n''')
-        for item in person.items:
-            lines.append(f"        {item['name']:<26} £{item['price']:>6.2f}\n")
-        lines.append(f"        Total:                     £{person_total:>6.2f}")
-        lines.append("\n")
-        total += person_total
-    lines.append(f'''        Total for the table:       £{total:>6.2f}\n''')
-    lines.append(f'''        Your server is: {server.name}
-        Enjoy your meal! Remember to 
-        recommend us to friends and family
-        ----------------------------------''')
-    return "".join(lines)
-
-
 def add_people_to_table(table: Table) -> None:
     for i in range(1, table.number_of_people + 1):
         person = Person(i)
         table.add_person(person)
+
+
+def take_orders(table: Table, menu: Menu) -> None:
+    for person in table.people:
+        while True:
+            item = get_order_items(person, menu)
+            if item is None:
+                break
+            person.add_item(item)
+        if person.recommend_drink(menu.get_category_ids(DRINKS_CATEGORY)):
+            add_recommended_drink(person, menu)
 
 
 def get_order_items(person: Person, menu: Menu) -> dict | None:
@@ -153,6 +120,39 @@ def add_recommended_drink(person: Person, menu: Menu) -> None:
             return
         else:
             print("Must be 'yes' or 'no'")
+
+
+def get_positive_int(prompt: str) -> int:
+    while True:
+        value = input(prompt)
+        if value.isdigit():
+            int_value = int(value)
+            if int_value > 0:
+                return int_value
+        print("Must be a positive integer.")
+
+
+def format_receipt(table: Table, server: Server) -> str:
+    total = 0
+    lines = [f'''
+        ----------------------------------
+            -- The Spectra Pizzeria --
+                      Table {table.number}
+        ----------------------------------\n''']
+    for person in table.people:
+        person_total = sum(item['price'] for item in person.items)
+        lines.append(f'''        Person {person.number}                    Price\n''')
+        for item in person.items:
+            lines.append(f"        {item['name']:<26} £{item['price']:>6.2f}\n")
+        lines.append(f"        Total:                     £{person_total:>6.2f}\n")
+        lines.append("\n")
+        total += person_total
+    lines.append(f'''        Total for the table:       £{total:>6.2f}\n''')
+    lines.append(f'''        Your server is: {server.name}
+        Enjoy your meal! Remember to 
+        recommend us to friends and family
+        ----------------------------------''')
+    return "".join(lines)
 
 
 if __name__ == "__main__":
