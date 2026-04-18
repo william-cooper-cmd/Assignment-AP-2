@@ -14,7 +14,8 @@ LOCK_FILE = Path("server.lock")
 DRINKS_CATEGORY = "drinks"
 
 
-def main(menu: Menu) -> None:
+def main() -> None:
+    menu = load_menu()
     server = authenticate()
     table = setup_table(server)
     print(menu.format_menu())
@@ -155,16 +156,20 @@ def format_receipt(table: Table, server: Server) -> str:
     return "".join(lines)
 
 
-if __name__ == "__main__":
+def load_menu():
     try:
         with open(MENU_FILE, 'r') as file:
-            main_menu = Menu(json.load(file))
+            menu = Menu(json.load(file))
     except FileNotFoundError:
         sys.exit(f"Error: {MENU_FILE} not found.")
     except json.JSONDecodeError as error:
         sys.exit(f"Error: {MENU_FILE} is malformed — {error}")
+    return menu
+
+
+if __name__ == "__main__":
     try:
-        main(main_menu)
+        main()
     finally:
         if LOCK_FILE.exists():
             LOCK_FILE.unlink()
