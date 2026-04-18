@@ -4,9 +4,12 @@ class Menu:
 
     def format_menu(self) -> str:
         lines = []
-        for category in self.json_data:
-            for item in self.json_data[category]:
-                lines.append(f"{item['name']}:{item['item_number']}")
+        for category, items in self.json_data.items():
+            lines.append(f"\n---{category.upper()}---")
+            for item in items:
+                name = item['name']
+                number = item['item_number']
+                lines.append(f"{number:>3} | {name}")
         return "\n".join(lines)
 
     def get_category_ids(self, category:str) -> set[int]:
