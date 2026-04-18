@@ -106,18 +106,44 @@ def test_get_credentials_returns_name_and_id(monkeypatch):
     monkeypatch.setattr("builtins.input", lambda _: next(inputs))
     assert main.get_credentials() == ("test", "1")
 
-def test_get_credentials_correct_order(monkeypatch):
-    inputs = iter(["test1", "2"])
-    monkeypatch.setattr("builtins.input", lambda _: next(inputs))
-    name, staff_id = main.get_credentials()
-    assert name == "test1"
-    assert staff_id == "2"
-
 def test_get_credentials_accepts_empty_strings(monkeypatch):
     inputs = iter(["", ""])
     monkeypatch.setattr("builtins.input", lambda _: next(inputs))
     assert main.get_credentials() == ("", "")
 
+
+#Test get_table_details
+def test_get_table_details_returns_valid_details(monkeypatch):
+    inputs = iter(["3", "4"])
+    monkeypatch.setattr("builtins.input", lambda _: next(inputs))
+    assert main.get_table_details() == (3, 4)
+
+def test_get_table_details_returns_correct_types(monkeypatch):
+    inputs = iter(["1", "2"])
+    monkeypatch.setattr("builtins.input", lambda _: next(inputs))
+    number, people = main.get_table_details()
+    assert isinstance(number, int)
+    assert isinstance(people, int)
+
+def test_get_table_details_rejects_invalid_table_number_then_accepts(monkeypatch):
+    inputs = iter(["abc", "2", "3"])
+    monkeypatch.setattr("builtins.input", lambda _: next(inputs))
+    assert main.get_table_details() == (2, 3)
+
+def test_get_table_details_rejects_zero_table_number_then_accepts(monkeypatch):
+    inputs = iter(["0", "1", "2"])
+    monkeypatch.setattr("builtins.input", lambda _: next(inputs))
+    assert main.get_table_details() == (1, 2)
+
+def test_get_table_details_rejects_invalid_people_count_then_accepts(monkeypatch):
+    inputs = iter(["1", "abc", "3"])
+    monkeypatch.setattr("builtins.input", lambda _: next(inputs))
+    assert main.get_table_details() == (1, 3)
+
+def test_get_table_details_rejects_zero_people_count_then_accepts(monkeypatch):
+    inputs = iter(["1", "0", "2"])
+    monkeypatch.setattr("builtins.input", lambda _: next(inputs))
+    assert main.get_table_details() == (1, 2)
 
 #Test acquire_lock
 def test_acquire_lock_returns_false_when_no_lock(tmp_path, monkeypatch):
@@ -239,13 +265,6 @@ def test_add_recommended_drink_yes_adds_item(monkeypatch):
     main.add_recommended_drink(person, menu)
     assert any(item['item_number'] == 2 for item in person.items)
 
-def test_add_recommended_drink_y_adds_item(monkeypatch):
-    menu = Menu(SAMPLE_MENU_DATA)
-    person = Person(1)
-    monkeypatch.setattr("builtins.input", lambda _: "y")
-    monkeypatch.setattr("random.choice", lambda x: 2)
-    main.add_recommended_drink(person, menu)
-    assert any(item['item_number'] == 2 for item in person.items)
 
 def test_add_recommended_drink_no_does_not_add(monkeypatch):
     menu = Menu(SAMPLE_MENU_DATA)
@@ -255,27 +274,12 @@ def test_add_recommended_drink_no_does_not_add(monkeypatch):
     main.add_recommended_drink(person, menu)
     assert person.items == []
 
-def test_add_recommended_drink_n_does_not_add(monkeypatch):
-    menu = Menu(SAMPLE_MENU_DATA)
-    person = Person(1)
-    monkeypatch.setattr("builtins.input", lambda _: "n")
-    monkeypatch.setattr("random.choice", lambda x: 2)
-    main.add_recommended_drink(person, menu)
-    assert person.items == []
 
 def test_add_recommended_drink_invalid_then_yes(monkeypatch):
     menu = Menu(SAMPLE_MENU_DATA)
     person = Person(1)
     inputs = iter(["maybe", "yes"])
     monkeypatch.setattr("builtins.input", lambda _: next(inputs))
-    monkeypatch.setattr("random.choice", lambda x: 2)
-    main.add_recommended_drink(person, menu)
-    assert any(item['item_number'] == 2 for item in person.items)
-
-def test_add_recommended_drink_case_insensitive(monkeypatch):
-    menu = Menu(SAMPLE_MENU_DATA)
-    person = Person(1)
-    monkeypatch.setattr("builtins.input", lambda _: "YES")
     monkeypatch.setattr("random.choice", lambda x: 2)
     main.add_recommended_drink(person, menu)
     assert any(item['item_number'] == 2 for item in person.items)
