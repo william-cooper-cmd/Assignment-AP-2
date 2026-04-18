@@ -83,6 +83,7 @@ def add_people_to_table(table: Table) -> None:
 
 def take_orders(table: Table, menu: Menu) -> None:
     for person in table.people:
+        print(f"person{person.number}:")
         while True:
             item = get_order_items(person, menu)
             if item is None:
@@ -93,7 +94,6 @@ def take_orders(table: Table, menu: Menu) -> None:
 
 
 def get_order_items(person: Person, menu: Menu) -> dict | None:
-    print(f"person{person.number}:")
     while True:
         choice = input("Enter choice: ")
         if choice == "":
