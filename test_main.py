@@ -61,3 +61,33 @@ def test_get_server_returns_second_user():
     with patch("builtins.open", mock_open(read_data=SAMPLE_SERVERS)):
         result = main.get_server("test1", "2")
         assert result == {"name": "test1", "staff_id": "2"}
+
+#Testing get_positive_int
+def test_get_positive_int_rejoins_zero_then_Accepts():
+    def test_get_positive_int_valid_input(monkeypatch):
+        monkeypatch.setattr("builtins.input", lambda _: "5")
+        assert main.get_positive_int("Enter: ") == 5
+
+    def test_get_positive_int_rejects_zero_then_accepts(monkeypatch):
+        inputs = iter(["0", "3"])
+        monkeypatch.setattr("builtins.input", lambda _: next(inputs))
+        assert main.get_positive_int("Enter: ") == 3
+
+    def test_get_positive_int_rejects_negative_then_accepts(monkeypatch):
+        inputs = iter(["-1", "2"])
+        monkeypatch.setattr("builtins.input", lambda _: next(inputs))
+        assert main.get_positive_int("Enter: ") == 2
+
+    def test_get_positive_int_rejects_text_then_accepts(monkeypatch):
+        inputs = iter(["abc", "4"])
+        monkeypatch.setattr("builtins.input", lambda _: next(inputs))
+        assert main.get_positive_int("Enter: ") == 4
+
+    def test_get_positive_int_rejects_float_then_accepts(monkeypatch):
+        inputs = iter(["1.5", "2"])
+        monkeypatch.setattr("builtins.input", lambda _: next(inputs))
+        assert main.get_positive_int("Enter: ") == 2
+
+    def test_get_positive_int_boundary_value_one(monkeypatch):
+        monkeypatch.setattr("builtins.input", lambda _: "1")
+        assert main.get_positive_int("Enter: ") == 1
