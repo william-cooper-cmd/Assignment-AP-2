@@ -4,6 +4,7 @@ import sys
 from pathlib import Path
 
 from Menu import Menu
+from MenuItem import MenuItem
 from Person import Person
 from Table import Table
 from Server import Server
@@ -30,12 +31,12 @@ def main() -> None:
 def authenticate() -> Server:
     #Exit if a lock file exists (another server is already logged in)
     if acquire_lock():
-        sys.exit(f"A server is already logged in. If this is an error delete '{LOCK_FILE}'")
+        raise RuntimeError(f"A server is already logged in. If this is an error delete '{LOCK_FILE}'")
     name, staff_id = get_credentials()
     server_details = load_server()
     server = get_server(name, staff_id, server_details)
     if not server:
-        sys.exit("Name or staff id not found.")
+        raise RuntimeError("Name or staff id not found.")
     server = Server(server)
     print(f"Welcome {server.name}")
     return server
@@ -115,17 +116,26 @@ def add_people_to_table(table: Table) -> None:
 def take_orders(table: Table, menu: Menu) -> None:
     #Take each person's order and suggest a drink if applicable
     for person in table.people:
-        print(f"person{person.number}:")
-        while True:
-            item = get_order_items(menu)
-            if item is None:
-                break
-            person.add_item(item)
-        if person.recommend_drink(menu.get_category_ids(DRINKS_CATEGORY)):
-            add_recommended_drink(person, menu)
+        take_person_order(person, menu)
+        maybe_recommend_drink(person, menu)
 
 
-def get_order_items(menu: Menu) -> dict | None:
+def take_person_order(person: Person, menu: Menu) -> None:
+    print(f"person {person.number}:")
+    while True:
+        item = get_order_items(menu)
+        if item is None:
+            break
+        person.add_item(item)
+
+
+def maybe_recommend_drink(person: Person, menu: Menu):
+    if person.recommend_drink(menu.get_category_ids(DRINKS_CATEGORY)):
+        add_recommended_drink(person, menu)
+
+
+
+def get_order_items(menu: Menu) -> MenuItem | None:
     #Prompt for item number and return the matching item
     while True:
         choice = input("Enter choice: ")
@@ -150,7 +160,7 @@ def add_recommended_drink(person: Person, menu: Menu) -> None:
         return
     recommended_drink = random.choice(drinks)
     while True:
-        add = input(f"Would you like to add {recommended_drink['name']} to your order? ").lower()
+        add = input(f"Would you like to add {recommended_drink.name} to your order? ").lower()
         if add in ("yes", "y"):
             person.add_item(recommended_drink)
             return
@@ -160,14 +170,19 @@ def add_recommended_drink(person: Person, menu: Menu) -> None:
             print("Must be 'yes' or 'no'")
 
 
+def parse_positive_int(value: str) -> int | None:
+    if value.isdigit() and int(value) > 0:
+        return int(value)
+    return None
+
+
 def get_positive_int(prompt: str) -> int:
     #Prompt until a positive integer is entered
     while True:
         value = input(prompt)
-        if value.isdigit():
-            int_value = int(value)
-            if int_value > 0:
-                return int_value
+        value = parse_positive_int(value)
+        if value is not None:
+            return value
         print("Must be a positive integer.")
 
 
@@ -182,7 +197,7 @@ def format_receipt(table: Table, server: Server) -> str:
         person_total = person.order_total
         lines.append(f'''        Person {person.number}                    Price\n''')
         for item in person.items:
-            lines.append(f"        {item['name']:<26} £{item['price']:>6.2f}\n")
+            lines.append(f"        {item.name:<26} £{item.price:>6.2f}\n")
         lines.append(f"        Total:                     £{person_total:>6.2f}\n")
         lines.append("\n")
     total = sum(person.order_total for person in table.people)
