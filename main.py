@@ -18,7 +18,7 @@ DRINKS_CATEGORY = "drinks"
 
 
 def main() -> None:
-    #load the menu, authenticate the server, set up the table, take the order, then print the final receipt
+    #Run the full ordering flow and print the receipt
     menu = load_menu()
     server = authenticate()
     table = setup_table(server)
@@ -51,7 +51,7 @@ def acquire_lock() -> bool:
 
 
 def get_credentials() -> tuple[str, str]:
-    #Prompt the user for name and ID
+    #Prompt for name and ID
     name = input("Enter name: ").strip()
     staff_id = input("Enter staff id: ").strip()
     return name, staff_id
@@ -64,8 +64,8 @@ def load_server() -> list[dict[str, str]]:
             data = json.load(f)
     except FileNotFoundError:
         sys.exit(f"Error: {SERVERS_FILE} not found.")
-    except json.JSONDecodeError as e:
-        sys.exit(f"Error: {SERVERS_FILE} is malformed — {e}")
+    except json.JSONDecodeError as error:
+        sys.exit(f"Error: {SERVERS_FILE} is malformed — {error}")
     else:
         return data
 
@@ -100,20 +100,20 @@ def get_table_number(server: Server) -> int:
 
 
 def get_table_details(server: Server) -> tuple[int, int]:
-    #Prompt the server for table number, and number of people at the table
+    #Prompt for table number, and number of people at the table
     number = get_table_number(server)
     number_of_people = get_positive_int("Enter number of people: ")
     return number, number_of_people
 
 
 def add_people_to_table(table: Table) -> None:
-    #Create a Person object for each person at the table
+    #Create a Person for each seat at the table
     for i in range(1, table.number_of_people + 1):
         table.add_person(Person(i))
 
 
 def take_orders(table: Table, menu: Menu) -> None:
-    #Loop through each person, get their order, and suggest a drink if they don't have one
+    #Take each person's order and suggest a drink if applicable
     for person in table.people:
         print(f"person{person.number}:")
         while True:
@@ -121,7 +121,6 @@ def take_orders(table: Table, menu: Menu) -> None:
             if item is None:
                 break
             person.add_item(item)
-        #Recommend drink if did not order one
         if person.recommend_drink(menu.get_category_ids(DRINKS_CATEGORY)):
             add_recommended_drink(person, menu)
 
@@ -145,7 +144,7 @@ def get_order_items(menu: Menu) -> dict | None:
 
 
 def add_recommended_drink(person: Person, menu: Menu) -> None:
-    #Select a random drink and ask the server if it should add it to that persons order
+    #Select a random drink and prompt to add it to the person's order
     drinks = menu.get_category_items(DRINKS_CATEGORY)
     if not drinks:
         return
@@ -199,18 +198,18 @@ def load_menu() -> Menu:
     #Load the menu and create a Menu object from it
     try:
         with MENU_FILE.open() as file:
-            menu = Menu(json.load(file))
+            return Menu(json.load(file))
     except FileNotFoundError:
-        sys.exit(f"Error: {MENU_FILE} not found.")
+        raise RuntimeError(f"{MENU_FILE} not found")
     except json.JSONDecodeError as error:
-        sys.exit(f"Error: {MENU_FILE} is malformed — {error}")
-    else:
-        return menu
+        raise RuntimeError(f"Error: {MENU_FILE} is malformed — {error}")
 
 
 if __name__ == "__main__":
     try:
         main()
+    except Exception as e:
+        print(e)
     finally:
         if LOCK_FILE.exists():
             LOCK_FILE.unlink()
