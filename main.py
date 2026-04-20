@@ -188,6 +188,8 @@ def get_positive_int(prompt: str) -> int:
 
 def format_receipt(table: Table, server: Server) -> str:
     #Build the receipt as a list of strings and join at the end
+    NAME_WIDTH = 26
+    PRICE_WIDTH = 8
     lines = [f'''
         ----------------------------------
             -- The Spectra Pizzeria --
@@ -195,10 +197,10 @@ def format_receipt(table: Table, server: Server) -> str:
         ----------------------------------\n''']
     for person in table.people:
         person_total = person.order_total
-        lines.append(f'''        Person {person.number}                    Price\n''')
+        lines.append(f'''lines.append(f"        {'Person ' + str(person.number):<{NAME_WIDTH}} {'Price':>{PRICE_WIDTH}}\n")''')
         for item in person.items:
-            lines.append(f"        {item.name:<26} £{item.price:>6.2f}\n")
-        lines.append(f"        Total:                     £{person_total:>6.2f}\n")
+            lines.append(f"        {item.name:<{NAME_WIDTH}} £{item.price:>{PRICE_WIDTH}.2f}\n")
+        lines.append(f"        {'Total:':<{NAME_WIDTH}} £{person_total:>{PRICE_WIDTH}.2f}\n")
         lines.append("\n")
     total = sum(person.order_total for person in table.people)
     lines.append(f'''        Total for the table:       £{total:>6.2f}\n''')
