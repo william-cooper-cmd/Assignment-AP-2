@@ -62,9 +62,9 @@ def load_server() -> list[dict[str, str]]:
         with SERVERS_FILE.open() as f:
             data = json.load(f)
     except FileNotFoundError:
-        sys.exit(f"Error: {SERVERS_FILE} not found.")
+        raise RuntimeError(f"Error: {SERVERS_FILE} not found.")
     except json.JSONDecodeError as error:
-        sys.exit(f"Error: {SERVERS_FILE} is malformed — {error}")
+        raise RuntimeError(f"Error: {SERVERS_FILE} is malformed — {error}")
     else:
         return data
 
