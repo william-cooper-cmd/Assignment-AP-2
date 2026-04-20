@@ -9,3 +9,7 @@ class Table:
 
     def add_person(self, person: Person) -> None:
         self.people.append(person)
+
+    @property
+    def is_full(self) -> bool:
+        return len(self.people) >= self.number_of_people

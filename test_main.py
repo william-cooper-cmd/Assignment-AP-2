@@ -41,33 +41,33 @@ SAMPLE_SERVERS_LIST = [
 def test_get_server_returns_correct_server():
     with patch("main.json.load", return_value=SAMPLE_SERVERS_LIST):
         with patch("pathlib.Path.open"):
-            result = main.get_server("test", "1")
+            result = main.get_server("test", "1", SAMPLE_SERVERS_LIST)
             assert result == {"name": "test", "staff_id": "1"}
 
 def test_get_server_returns_none_for_wrong_name():
     with patch("main.json.load", return_value=SAMPLE_SERVERS_LIST):
         with patch("pathlib.Path.open"):
-            assert main.get_server("wrong", "1") is None
+            assert main.get_server("wrong", "1", SAMPLE_SERVERS_LIST) is None
 
 def test_get_server_returns_none_for_wrong_id():
     with patch("main.json.load", return_value=SAMPLE_SERVERS_LIST):
         with patch("pathlib.Path.open"):
-            assert main.get_server("test", "999") is None
+            assert main.get_server("test", "999", SAMPLE_SERVERS_LIST) is None
 
 def test_get_server_returns_none_for_both_wrong():
     with patch("main.json.load", return_value=SAMPLE_SERVERS_LIST):
         with patch("pathlib.Path.open"):
-            assert main.get_server("wrong", "999") is None
+            assert main.get_server("wrong", "999", SAMPLE_SERVERS_LIST) is None
 
 def test_get_server_id_belongs_to_different_user():
     with patch("main.json.load", return_value=SAMPLE_SERVERS_LIST):
         with patch("pathlib.Path.open"):
-            assert main.get_server("test", "2") is None
+            assert main.get_server("test", "2", SAMPLE_SERVERS_LIST) is None
 
 def test_get_server_returns_second_user():
     with patch("main.json.load", return_value=SAMPLE_SERVERS_LIST):
         with patch("pathlib.Path.open"):
-            result = main.get_server("test1", "2")
+            result = main.get_server("test1", "2", SAMPLE_SERVERS_LIST)
             assert result == {"name": "test1", "staff_id": "2"}
 
 #Testing get_positive_int
@@ -233,26 +233,26 @@ def test_get_order_items_valid_item_returned(monkeypatch):
     menu = Menu(SAMPLE_MENU_DATA)
     inputs = iter(["1"])
     monkeypatch.setattr("builtins.input", lambda _: next(inputs))
-    result = main.get_order_items(Person(1), menu)
+    result = main.get_order_items(menu)
     assert result == {"name": "pizza", "item_number": 1, "price": 10}
 
 def test_get_order_items_empty_input_returns_none(monkeypatch):
     menu = Menu(SAMPLE_MENU_DATA)
     monkeypatch.setattr("builtins.input", lambda _: "")
-    assert main.get_order_items(Person(1), menu) is None
+    assert main.get_order_items(menu) is None
 
 def test_get_order_items_rejects_text_then_accepts(monkeypatch):
     menu = Menu(SAMPLE_MENU_DATA)
     inputs = iter(["1", "1"])
     monkeypatch.setattr("builtins.input", lambda _: next(inputs))
-    result = main.get_order_items(Person(1), menu)
+    result = main.get_order_items(menu)
     assert result == {"name": "pizza", "item_number": 1, "price": 10}
 
 def test_get_order_items_rejects_invalid_number_then_accepts(monkeypatch):
     menu = Menu(SAMPLE_MENU_DATA)
     inputs = iter(["99", "1"])
     monkeypatch.setattr("builtins.input", lambda _: next(inputs))
-    result = main.get_order_items(Person(1), menu)
+    result = main.get_order_items(menu)
     assert result == {"name": "pizza", "item_number": 1, "price": 10}
 
 
@@ -261,7 +261,7 @@ def test_add_recommended_drink_yes_adds_item(monkeypatch):
     menu = Menu(SAMPLE_MENU_DATA)
     person = Person(1)
     monkeypatch.setattr("builtins.input", lambda _: "yes")
-    monkeypatch.setattr("random.choice", lambda x: 2)
+    monkeypatch.setattr("random.choice", lambda x: {"name": "Coke", "item_number": 2, "price": 2.5})
     main.add_recommended_drink(person, menu)
     assert any(item['item_number'] == 2 for item in person.items)
 
@@ -270,7 +270,7 @@ def test_add_recommended_drink_no_does_not_add(monkeypatch):
     menu = Menu(SAMPLE_MENU_DATA)
     person = Person(1)
     monkeypatch.setattr("builtins.input", lambda _: "no")
-    monkeypatch.setattr("random.choice", lambda x: 2)
+    monkeypatch.setattr("random.choice", lambda x: {"name": "Coke", "item_number": 2, "price": 2.5})
     main.add_recommended_drink(person, menu)
     assert person.items == []
 
@@ -280,6 +280,6 @@ def test_add_recommended_drink_invalid_then_yes(monkeypatch):
     person = Person(1)
     inputs = iter(["maybe", "yes"])
     monkeypatch.setattr("builtins.input", lambda _: next(inputs))
-    monkeypatch.setattr("random.choice", lambda x: 2)
+    monkeypatch.setattr("random.choice", lambda x: {"name": "Coke", "item_number": 2, "price": 2.5})
     main.add_recommended_drink(person, menu)
     assert any(item['item_number'] == 2 for item in person.items)

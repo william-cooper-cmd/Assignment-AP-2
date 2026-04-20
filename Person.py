@@ -12,3 +12,7 @@ class Person:
             if item['item_number'] in drink_ids:
                 return False
         return True
+
+    @property
+    def order_total(self) -> float:
+        return sum([item['price'] for item in self.items])
