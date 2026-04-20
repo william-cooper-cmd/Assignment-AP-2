@@ -28,7 +28,7 @@ def main() -> None:
 
 
 def authenticate() -> Server:
-    #Check if lock file exists, another server is logged in and exit to prevent multiple logins
+    #Exit if a lock file exists (another server is already logged in)
     if acquire_lock():
         sys.exit(f"A server is already logged in. If this is an error delete '{LOCK_FILE}'")
     name, staff_id = get_credentials()
@@ -71,7 +71,7 @@ def load_server() -> list[dict[str, str]]:
 
 
 def get_server(name: str, staff_id: str, server_details: list[dict]) -> dict | None:
-    #Find and return matching sever details, or None if not found
+    #Find and return matching server details, or None if not found
     for server in server_details:
         if server['name'] == name and server['staff_id'] == staff_id:
             return server
