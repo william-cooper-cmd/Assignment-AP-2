@@ -30,8 +30,7 @@ def main() -> None:
 
 def authenticate() -> Server:
     #Exit if a lock file exists (another server is already logged in)
-    if acquire_lock():
-        raise RuntimeError(f"A server is already logged in. If this is an error delete '{LOCK_FILE}'")
+    acquire_lock()
     name, staff_id = get_credentials()
     server_details = load_server()
     server = get_server(name, staff_id, server_details)
@@ -42,13 +41,12 @@ def authenticate() -> Server:
     return server
 
 
-def acquire_lock() -> bool:
+def acquire_lock() -> None:
     #Open lock file in exclusive creation to prevent concurrent logins
     try:
         LOCK_FILE.open('x').close()
-        return False
     except FileExistsError:
-        return True
+        raise RuntimeError("Server already logged in")
 
 
 def get_credentials() -> tuple[str, str]:
@@ -121,7 +119,7 @@ def take_orders(table: Table, menu: Menu) -> None:
 
 
 def take_person_order(person: Person, menu: Menu) -> None:
-    print(f"person {person.number}:")
+    print(f"\nPerson {person.number}")
     while True:
         item = get_order_items(menu)
         if item is None:
@@ -138,7 +136,7 @@ def maybe_recommend_drink(person: Person, menu: Menu):
 def get_order_items(menu: Menu) -> MenuItem | None:
     #Prompt for item number and return the matching item
     while True:
-        choice = input("Enter choice: ")
+        choice = input("Enter choice (blank to finish): ")
         if choice == "":
             return None
         try:
@@ -179,10 +177,12 @@ def parse_positive_int(value: str) -> int | None:
 def get_positive_int(prompt: str) -> int:
     #Prompt until a positive integer is entered
     while True:
-        value = input(prompt)
-        value = parse_positive_int(value)
-        if value is not None:
-            return value
+        try:
+            value = int(input(prompt))
+            if value > 0:
+                return value
+        except ValueError:
+            pass
         print("Must be a positive integer.")
 
 
@@ -197,13 +197,13 @@ def format_receipt(table: Table, server: Server) -> str:
         ----------------------------------\n''']
     for person in table.people:
         person_total = person.order_total
-        lines.append(f'''lines.append(f"        {'Person ' + str(person.number):<{NAME_WIDTH}} {'Price':>{PRICE_WIDTH}}\n")''')
+        lines.append(f"        {'Person ' + str(person.number):<{NAME_WIDTH}} {'Price':>{PRICE_WIDTH}}\n")
         for item in person.items:
             lines.append(f"        {item.name:<{NAME_WIDTH}} £{item.price:>{PRICE_WIDTH}.2f}\n")
         lines.append(f"        {'Total:':<{NAME_WIDTH}} £{person_total:>{PRICE_WIDTH}.2f}\n")
         lines.append("\n")
     total = sum(person.order_total for person in table.people)
-    lines.append(f'''        Total for the table:       £{total:>6.2f}\n''')
+    lines.append(f"        {'Total for the table:':<{NAME_WIDTH}} £{total:>{PRICE_WIDTH-1}.2f}\n")
     lines.append(f'''        Your server is: {server.name}
         Enjoy your meal! Remember to 
         recommend us to friends and family
