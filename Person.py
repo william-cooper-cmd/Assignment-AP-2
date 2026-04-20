@@ -1,3 +1,6 @@
+from MenuItem import MenuItem
+
+
 class Person:
 
     def __init__(self, number: int) -> None:
@@ -5,7 +8,7 @@ class Person:
         self.number = number
         self.items: list[dict] = []
 
-    def add_item(self, item: dict) -> None:
+    def add_item(self, item: MenuItem) -> None:
         """Adds item to person's item list"""
         self.items.append(item)
 
