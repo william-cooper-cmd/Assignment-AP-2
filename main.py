@@ -1,6 +1,5 @@
 import json
 import random
-import sys
 from pathlib import Path
 
 from Menu import Menu
@@ -166,12 +165,6 @@ def add_recommended_drink(person: Person, menu: Menu) -> None:
             return
         else:
             print("Must be 'yes' or 'no'")
-
-
-def parse_positive_int(value: str) -> int | None:
-    if value.isdigit() and int(value) > 0:
-        return int(value)
-    return None
 
 
 def get_positive_int(prompt: str) -> int:
