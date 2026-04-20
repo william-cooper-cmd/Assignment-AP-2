@@ -42,7 +42,7 @@ def authenticate() -> Server:
 
 
 def acquire_lock() -> bool:
-    #Open the lock file with exclusive creation mode, it already exists raises FileExistsError
+    #Open lock file in exclusive creation to prevent concurrent logins
     try:
         LOCK_FILE.open('x').close()
         return False
@@ -71,7 +71,7 @@ def load_server() -> list[dict[str, str]]:
 
 
 def get_server(name: str, staff_id: str, server_details: list[dict]) -> dict | None:
-    #Search the sever list for a matching entry for bot name and ID
+    #Find and return matching sever details, or None if not found
     for server in server_details:
         if server['name'] == name and server['staff_id'] == staff_id:
             return server
@@ -79,7 +79,7 @@ def get_server(name: str, staff_id: str, server_details: list[dict]) -> dict | N
 
 
 def setup_table(server: Server) -> Table:
-    #Create a table with table number and number of people, create the table object, and add the people
+    #Create a table and fill it with people
     table = Table(*get_table_details(server))
     server.add_table(table)
     add_people_to_table(table)
@@ -87,12 +87,11 @@ def setup_table(server: Server) -> Table:
 
 
 def is_table_number_taken(server: Server, number: int) -> bool:
-    #Check if the table number is taken or not
     return any(table.number == number for table in server.tables)
 
 
 def get_table_number(server: Server) -> int:
-    #keep prompting the user until a unique table number is assigned
+    #Prompt until a unique table number is entered
     while True:
         number = get_positive_int("Enter table number: ")
         if not is_table_number_taken(server, number):
@@ -122,6 +121,7 @@ def take_orders(table: Table, menu: Menu) -> None:
             if item is None:
                 break
             person.add_item(item)
+        #Recommend drink if did not order one
         if person.recommend_drink(menu.get_category_ids(DRINKS_CATEGORY)):
             add_recommended_drink(person, menu)
 
@@ -162,7 +162,7 @@ def add_recommended_drink(person: Person, menu: Menu) -> None:
 
 
 def get_positive_int(prompt: str) -> int:
-    #reprompts until the user enters a positive integer
+    #Prompt until a positive integer is entered
     while True:
         value = input(prompt)
         if value.isdigit():
