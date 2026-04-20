@@ -28,8 +28,8 @@ def main() -> None:
 
 
 def authenticate() -> Server:
-    #Exit if a lock file exists (another server is already logged in)
-    acquire_lock()
+    #Exit if a lock file exists (server is already logged in)
+    create_lock()
     name, staff_id = get_credentials()
     server_details = load_server()
     server = get_server(name, staff_id, server_details)
@@ -40,8 +40,8 @@ def authenticate() -> Server:
     return server
 
 
-def acquire_lock() -> None:
-    #Open lock file in exclusive creation to prevent concurrent logins
+def create_lock() -> None:
+    #Open lock file raises an error if one already exists
     try:
         LOCK_FILE.open('x').close()
     except FileExistsError:
@@ -69,7 +69,7 @@ def load_server() -> list[dict[str, str]]:
 
 
 def get_server(name: str, staff_id: str, server_details: list[dict]) -> dict | None:
-    #Find and return matching server details, or None if not found
+    #Find server matching name and staff ID, overwise return None
     for server in server_details:
         if server['name'] == name and server['staff_id'] == staff_id:
             return server
@@ -77,7 +77,7 @@ def get_server(name: str, staff_id: str, server_details: list[dict]) -> dict | N
 
 
 def setup_table(server: Server) -> Table:
-    #Create a table and fill it with people
+    #Create a table, register it with server, and assign people to it
     table = Table(*get_table_details(server))
     server.add_table(table)
     add_people_to_table(table)
@@ -85,6 +85,7 @@ def setup_table(server: Server) -> Table:
 
 
 def is_table_number_taken(server: Server, number: int) -> bool:
+    #Check if table number is already in use
     return any(table.number == number for table in server.tables)
 
 
@@ -105,7 +106,7 @@ def get_table_details(server: Server) -> tuple[int, int]:
 
 
 def add_people_to_table(table: Table) -> None:
-    #Create a Person for each seat at the table
+    #Create a Person object  for each table seat
     for i in range(1, table.number_of_people + 1):
         table.add_person(Person(i))
 
@@ -118,18 +119,13 @@ def take_orders(table: Table, menu: Menu) -> None:
 
 
 def take_person_order(person: Person, menu: Menu) -> None:
+    #Handle ordering process for a single person
     print(f"\nPerson {person.number}")
     while True:
         item = get_order_items(menu)
         if item is None:
             break
         person.add_item(item)
-
-
-def maybe_recommend_drink(person: Person, menu: Menu):
-    if person.recommend_drink(menu.get_category_ids(DRINKS_CATEGORY)):
-        add_recommended_drink(person, menu)
-
 
 
 def get_order_items(menu: Menu) -> MenuItem | None:
@@ -150,11 +146,17 @@ def get_order_items(menu: Menu) -> MenuItem | None:
         return item
 
 
+def maybe_recommend_drink(person: Person, menu: Menu):
+    # Check if a drink should be recommended and offer it
+    if person.recommend_drink(menu.get_category_ids(DRINKS_CATEGORY)):
+        add_recommended_drink(person, menu)
+
+
 def add_recommended_drink(person: Person, menu: Menu) -> None:
     #Select a random drink and prompt to add it to the person's order
     drinks = menu.get_category_items(DRINKS_CATEGORY)
     if not drinks:
-        return
+        raise RuntimeError(f"No drinks found in {MENU_FILE}")
     recommended_drink = random.choice(drinks)
     while True:
         add = input(f"Would you like to add {recommended_drink.name} to your order? ").lower()
