@@ -2,14 +2,14 @@ from Menu import Menu
 from MenuItem import MenuItem
 
 SAMPLE_MENU = {
-    "mains": [{"id": 1, "name": "Margherita", "price": 9.99}],
-    "drinks": [{"id": 2, "name": "Coke", "price": 2.50}]
+    "mains": [{"id": 1, "name": "Margherita", "price": 9.99, "description": "test"}],
+    "drinks": [{"id": 2, "name": "Coke", "price": 2.50, "description": "test"}]
 }
 
 def test_find_item_returns_correct_item():
     menu = Menu(SAMPLE_MENU)
     result = menu.find_item(1)
-    assert result == MenuItem(id=1, name="Margherita", price=9.99, category="mains")
+    assert result == MenuItem(id=1, name="Margherita", price=9.99, description="test", category="mains")
 
 def test_find_item_returns_none_for_missing_item():
     menu = Menu(SAMPLE_MENU)
@@ -29,4 +29,4 @@ def test_format_menu_contains_item_names():
 def test_get_category_items_returns_correct_items():
     menu = Menu(SAMPLE_MENU)
     result = menu.get_category_items("drinks")
-    assert result == [MenuItem(id=2, name="Coke", price=2.50, category="drinks")]
+    assert result == [MenuItem(id=2, name="Coke", price=2.50, description="test", category="drinks")]

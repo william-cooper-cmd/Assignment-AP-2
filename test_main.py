@@ -19,10 +19,10 @@ SAMPLE_SERVERS = [
 
 SAMPLE_MENU_DATA = {
     "mains": [
-        {"name": "pizza", "id": 1, "price": 10}
+        {"name": "pizza", "id": 1, "price": 10, "description": "test"}
     ],
     "drinks": [
-        {"name": "Coke", "id": 2, "price": 2.5}
+        {"name": "Coke", "id": 2, "price": 2.5, "description": "test"}
     ]
 }
 
@@ -34,7 +34,7 @@ def make_server():
 def make_table_with_orders():
     table = Table(1, 1)
     person = Person(1)
-    item = MenuItem(id=1, name="pizza", price=10, category="mains")
+    item = MenuItem(id=1, name="pizza", price=10, description="test", category="mains")
     person.add_item(item)
     table.add_person(person)
     return table
@@ -46,7 +46,8 @@ def make_table_with_orders():
 
 def test_get_server_returns_correct():
     result = main.get_server("test", "1", SAMPLE_SERVERS)
-    assert result == {"name": "test", "staff_id": "1"}
+    assert result.name == "test"
+    assert result.staff_id == "1"
 
 
 def test_get_server_wrong_name():
@@ -67,7 +68,8 @@ def test_get_server_id_belongs_to_different_user():
 
 def test_get_server_second_user():
     result = main.get_server("test1", "2", SAMPLE_SERVERS)
-    assert result == {"name": "test1", "staff_id": "2"}
+    assert result.name == "test1"
+    assert result.staff_id == "2"
 
 
 # -----------------------------
@@ -277,7 +279,7 @@ def test_add_recommended_drink_yes(monkeypatch):
     menu = Menu(SAMPLE_MENU_DATA)
     person = Person(1)
     monkeypatch.setattr("builtins.input", lambda _: "yes")
-    monkeypatch.setattr("random.choice", lambda x: MenuItem(id=2, name="Coke", price=2.5, category="drinks"))
+    monkeypatch.setattr("random.choice", lambda x: MenuItem(id=2, name="Coke", price=2.5, description="test", category="drinks"))
     main.add_recommended_drink(person, menu)
     assert any(i.id == 2 for i in person.items)
 
@@ -286,7 +288,7 @@ def test_add_recommended_drink_y(monkeypatch):
     menu = Menu(SAMPLE_MENU_DATA)
     person = Person(1)
     monkeypatch.setattr("builtins.input", lambda _: "y")
-    monkeypatch.setattr("random.choice", lambda x: MenuItem(id=2, name="Coke", price=2.5, category="drinks"))
+    monkeypatch.setattr("random.choice", lambda x: MenuItem(id=2, name="Coke", price=2.5, description="test", category="drinks"))
     main.add_recommended_drink(person, menu)
     assert any(i.id == 2 for i in person.items)
 
@@ -295,7 +297,7 @@ def test_add_recommended_drink_no(monkeypatch):
     menu = Menu(SAMPLE_MENU_DATA)
     person = Person(1)
     monkeypatch.setattr("builtins.input", lambda _: "no")
-    monkeypatch.setattr("random.choice", lambda x: MenuItem(id=2, name="Coke", price=2.5, category="drinks"))
+    monkeypatch.setattr("random.choice", lambda x: MenuItem(id=2, name="Coke", price=2.5, description="test", category="drinks"))
     main.add_recommended_drink(person, menu)
     assert len(person.items) == 0
 
@@ -304,7 +306,7 @@ def test_add_recommended_drink_n(monkeypatch):
     menu = Menu(SAMPLE_MENU_DATA)
     person = Person(1)
     monkeypatch.setattr("builtins.input", lambda _: "n")
-    monkeypatch.setattr("random.choice", lambda x: MenuItem(id=2, name="Coke", price=2.5, category="drinks"))
+    monkeypatch.setattr("random.choice", lambda x: MenuItem(id=2, name="Coke", price=2.5, description="test", category="drinks"))
     main.add_recommended_drink(person, menu)
     assert len(person.items) == 0
 
@@ -314,7 +316,7 @@ def test_add_recommended_drink_invalid_then_yes(monkeypatch):
     person = Person(1)
     inputs = iter(["maybe", "yes"])
     monkeypatch.setattr("builtins.input", lambda _: next(inputs))
-    monkeypatch.setattr("random.choice", lambda x: MenuItem(id=2, name="Coke", price=2.5, category="drinks"))
+    monkeypatch.setattr("random.choice", lambda x: MenuItem(id=2, name="Coke", price=2.5, description="test", category="drinks"))
     main.add_recommended_drink(person, menu)
     assert any(i.id == 2 for i in person.items)
 
@@ -323,7 +325,7 @@ def test_add_recommended_drink_case_insensitive(monkeypatch):
     menu = Menu(SAMPLE_MENU_DATA)
     person = Person(1)
     monkeypatch.setattr("builtins.input", lambda _: "YES")
-    monkeypatch.setattr("random.choice", lambda x: MenuItem(id=2, name="Coke", price=2.5, category="drinks"))
+    monkeypatch.setattr("random.choice", lambda x: MenuItem(id=2, name="Coke", price=2.5, description="test", category="drinks"))
     main.add_recommended_drink(person, menu)
     assert any(i.id == 2 for i in person.items)
 
@@ -364,7 +366,7 @@ def test_receipt_multiple_people():
     table = Table(1, 2)
     for i in range(1, 3):
         p = Person(i)
-        p.add_item(MenuItem(id=1, name="pizza", price=10, category="mains"))
+        p.add_item(MenuItem(id=1, name="pizza", price=10, description="test", category="mains"))
         table.add_person(p)
     result = main.format_receipt(table, make_server())
     assert "Person 1" in result
