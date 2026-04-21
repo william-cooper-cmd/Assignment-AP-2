@@ -3,7 +3,7 @@ from Person import Person
 class Table:
 
     def __init__(self, number: int, number_of_people: int) -> None:
-        """Initialises table object"""
+        """Initialises table object, with table number and number of people"""
         self.number = number
         self.number_of_people = number_of_people
         self.people: list[Person] = []
