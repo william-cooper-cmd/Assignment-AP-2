@@ -28,7 +28,7 @@ SAMPLE_MENU_DATA = {
 
 
 def make_server():
-    return Server({"name": "test", "staff_id": "1"})
+    return Server("test", "1")
 
 
 def make_table_with_orders():
