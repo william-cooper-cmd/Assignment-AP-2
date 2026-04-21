@@ -160,7 +160,8 @@ def add_recommended_drink(person: Person, menu: Menu) -> None:
     #Select a random drink and prompt to add it to the person's order
     drinks = menu.get_category_items(DRINKS_CATEGORY)
     if not drinks:
-        raise RuntimeError(f"No drinks found in {MENU_FILE}")
+        print(f"No drinks found in {MENU_FILE}")
+        return
     recommended_drink = random.choice(drinks)
     while True:
         add = input(f"Would you like to add {recommended_drink.name} to your order? ").lower()
