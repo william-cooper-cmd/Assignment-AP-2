@@ -3,11 +3,11 @@ from Table import Table
 
 class Server:
 
-    def __init__(self, server_details: dict) -> None:
+    def __init__(self, name: str, staff_id: str) -> None:
         """Initialise server object"""
         self.tables: list[Table] = []
-        self.name: str = server_details['name']
-        self.staff_id: str = server_details['staff_id']
+        self.name: str = name
+        self.staff_id: str = staff_id
 
     def add_table(self, table: Table) -> None:
         """Append table to end of servers list"""

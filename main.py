@@ -76,7 +76,7 @@ def get_server(name: str, staff_id: str, server_details: list[dict]) -> Server |
     #Find server matching name and staff ID, otherwise return None
     for server in server_details:
         if server['name'] == name and server['staff_id'] == staff_id:
-            return Server(server)
+            return Server(server['name'], server['staff_id'])
     return None
 
 
