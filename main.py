@@ -35,7 +35,6 @@ def authenticate() -> Server:
     server = get_server(name, staff_id, server_details)
     if not server:
         raise RuntimeError("Name or staff id not found.")
-    server = Server(server)
     print(f"Welcome {server.name}")
     return server
 
@@ -68,11 +67,11 @@ def load_server() -> list[dict[str, str]]:
         return data
 
 
-def get_server(name: str, staff_id: str, server_details: list[dict]) -> dict | None:
+def get_server(name: str, staff_id: str, server_details: list[dict]) -> Server | None:
     #Find server matching name and staff ID, otherwise return None
     for server in server_details:
         if server['name'] == name and server['staff_id'] == staff_id:
-            return server
+            return Server(server)
     return None
 
 

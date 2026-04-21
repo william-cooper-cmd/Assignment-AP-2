@@ -4,7 +4,7 @@ from Table import Table
 class Server:
 
     def __init__(self, server_details: dict) -> None:
-        """#Initialise server object"""
+        """Initialise server object"""
         self.tables: list[Table] = []
         self.name: str = server_details['name']
         self.staff_id: str = server_details['staff_id']
