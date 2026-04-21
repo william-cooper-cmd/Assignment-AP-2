@@ -25,3 +25,7 @@ def test_server_stores_name_and_staff_id():
     server = Server({"name": "test", "staff_id": "1"})
     assert server.name == "test"
     assert server.staff_id == "1"
+
+def test_server_initialises_with_empty_tables():
+    server = Server({"name": "test", "staff_id": "1"})
+    assert server.tables == []
