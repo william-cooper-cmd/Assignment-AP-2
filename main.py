@@ -49,8 +49,13 @@ def create_lock() -> None:
 
 def get_credentials() -> tuple[str, str]:
     #Prompt for name and ID
-    name = input("Enter name: ").strip()
-    staff_id = input("Enter staff id: ").strip()
+    while True:
+        name = input("Enter name: ").strip()
+        staff_id = input("Enter staff id: ").strip()
+        if name == "" or staff_id == "":
+            print("Input should not be blank")
+            continue
+        break
     return name, staff_id
 
 
