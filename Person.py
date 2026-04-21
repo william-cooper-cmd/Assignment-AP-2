@@ -13,7 +13,7 @@ class Person:
         self.items.append(item)
 
     def recommend_drink(self, drink_ids: set[int]) -> bool:
-        """Check if a drink item is in person's item list"""
+        """Return True if a person has not ordered a drink"""
         for item in self.items:
             if item.id in drink_ids:
                 return False
@@ -21,5 +21,5 @@ class Person:
 
     @property
     def order_total(self) -> float:
-        """Returns person's total"""
-        return sum([item.price for item in self.items])
+        """Returns total cost of all items in this person's order"""
+        return sum(item.price for item in self.items)

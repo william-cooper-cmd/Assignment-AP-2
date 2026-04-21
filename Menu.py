@@ -38,7 +38,7 @@ class Menu:
         return {item.id for item in self.items if item.category == category}
 
     def find_item(self, item_id: int) -> MenuItem | None:
-        """Return item by ID"""
+        """Return MenuItem matching given ID"""
         for item in self.items:
             if item.id == item_id:
                 return item

@@ -28,7 +28,7 @@ def main() -> None:
 
 
 def authenticate() -> Server:
-    #Exit if a lock file exists (server is already logged in)
+    #Attempts to log server in raises RuntimeError if already logged in or incorrect details
     create_lock()
     name, staff_id = get_credentials()
     server_details = load_server()
@@ -69,7 +69,7 @@ def load_server() -> list[dict[str, str]]:
 
 
 def get_server(name: str, staff_id: str, server_details: list[dict]) -> dict | None:
-    #Find server matching name and staff ID, overwise return None
+    #Find server matching name and staff ID, otherwise return None
     for server in server_details:
         if server['name'] == name and server['staff_id'] == staff_id:
             return server
@@ -106,7 +106,7 @@ def get_table_details(server: Server) -> tuple[int, int]:
 
 
 def add_people_to_table(table: Table) -> None:
-    #Create a Person object  for each table seat
+    #Create a Person object for each table seat
     for i in range(1, table.number_of_people + 1):
         table.add_person(Person(i))
 
@@ -146,7 +146,7 @@ def get_order_items(menu: Menu) -> MenuItem | None:
         return item
 
 
-def maybe_recommend_drink(person: Person, menu: Menu):
+def maybe_recommend_drink(person: Person, menu: Menu) -> None:
     # Check if a drink should be recommended and offer it
     if person.recommend_drink(menu.get_category_ids(DRINKS_CATEGORY)):
         add_recommended_drink(person, menu)
@@ -198,7 +198,7 @@ def format_receipt(table: Table, server: Server) -> str:
         lines.append(f"        {'Total:':<{NAME_WIDTH}} £{person_total:>{PRICE_WIDTH}.2f}\n")
         lines.append("\n")
     total = sum(person.order_total for person in table.people)
-    lines.append(f"        {'Total for the table:':<{NAME_WIDTH}} £{total:>{PRICE_WIDTH-1}.2f}\n")
+    lines.append(f"        {'Total for the table:':<{NAME_WIDTH}} £{total:>{PRICE_WIDTH}.2f}\n")
     lines.append(f'''        Your server is: {server.name}
         Enjoy your meal! Remember to 
         recommend us to friends and family
