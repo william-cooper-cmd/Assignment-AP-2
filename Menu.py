@@ -12,6 +12,7 @@ class Menu:
                     MenuItem(
                         id=item["id"],
                         name=item["name"],
+                        description=item['description'],
                         price=item["price"],
                         category=category
                     )
@@ -29,7 +30,7 @@ class Menu:
         for category, items in categories.items():
             lines.append(f"\n---{category.upper()}---")
             for item in items:
-                lines.append(f"{item.id:>3} | {item.name} - £{item.price:.2f}")
+                lines.append(f"{item.id:>3} | {item.name}: {item.decription} - £{item.price:.2f}")
 
         return "\n".join(lines)
 

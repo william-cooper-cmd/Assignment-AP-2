@@ -4,5 +4,6 @@ from dataclasses import dataclass
 class MenuItem:
     id: int
     name: str
+    description: str
     price: float
     category: str
